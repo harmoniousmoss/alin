@@ -184,21 +184,24 @@ Please provide a clear, helpful, and conversational response to the user based o
             ai_response = self.call_ollama_streaming(format_prompt)
             
         else:
-            # Regular conversation - use context from previous messages
-            context = "\n".join([f"{msg['role']}: {msg['content']}" for msg in self.conversation_history[-5:]])
-            
-            conversation_prompt = f"""
-You are a helpful assistant that can chat about general topics and also help with database queries.
+            # Non-database query - redirect to database functionality
+            redirect_prompt = f"""
+You are a database assistant specialized in PostgreSQL database queries. The user asked: "{user_input}"
+
+This question is not related to database operations. Please politely redirect them to use the database functionality.
 
 Available database tables: {', '.join(self.available_tables)}
 
-Recent conversation:
-{context}
+Respond briefly and suggest they ask database-related questions like:
+- "What tables are available?"
+- "Show me the structure of [table_name]"  
+- "How many records are in [table_name]?"
+- "Show me sample data from [table_name]"
 
-Please respond helpfully. If the user seems to want database information, suggest they ask about the available tables.
+Be helpful but keep the focus on database operations only.
 """
             
-            ai_response = self.call_ollama_streaming(conversation_prompt)
+            ai_response = self.call_ollama_streaming(redirect_prompt)
         
         # Add AI response to history
         self.conversation_history.append({"role": "assistant", "content": ai_response})
