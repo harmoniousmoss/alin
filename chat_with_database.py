@@ -80,6 +80,28 @@ class DatabaseChatBot:
                 result = await self.mcp_server._get_tables(params)
             elif tool_name == "describe_table":
                 result = await self.mcp_server._describe_table(params)
+            elif tool_name == "get_all_schemas":
+                # Get schemas for all tables to compare column counts
+                all_schemas = {}
+                for table in self.available_tables:
+                    result = await self.mcp_server._describe_table({"table_name": table})
+                    all_schemas[table] = result[0].text
+                
+                # Format results for AI to analyze
+                schema_summary = "Table schemas:\n\n"
+                for table, schema in all_schemas.items():
+                    # Extract column count from schema
+                    import ast
+                    schema_start = schema.find('[')
+                    if schema_start > 0:
+                        try:
+                            schema_data = ast.literal_eval(schema[schema_start:])
+                            column_count = len(schema_data)
+                            schema_summary += f"{table}: {column_count} columns\n"
+                        except:
+                            schema_summary += f"{table}: schema parsing error\n"
+                
+                return schema_summary
             elif tool_name == "count_records":
                 result = await self.mcp_server._count_records(params)
             elif tool_name == "execute_select":
@@ -99,8 +121,12 @@ class DatabaseChatBot:
         if any(word in user_lower for word in ["tables", "what tables", "list tables"]):
             return "get_tables", {}
         
-        elif any(word in user_lower for word in ["schema", "structure", "columns", "describe"]):
-            # Try to extract table name
+        elif any(word in user_lower for word in ["schema", "structure", "columns", "describe", "column", "most column"]):
+            # Check if asking for comparison across tables
+            if any(word in user_lower for word in ["most", "all", "compare", "which"]):
+                # User wants to compare tables - describe all tables
+                return "get_all_schemas", {}
+            # Try to extract specific table name
             for table in self.available_tables:
                 if table in user_lower:
                     return "describe_table", {"table_name": table}
