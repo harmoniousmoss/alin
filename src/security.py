@@ -52,9 +52,10 @@ class QueryValidator:
         if not query_upper.startswith('SELECT'):
             return False, "Only SELECT queries are allowed"
         
-        # Check for blocked keywords
+        # Check for blocked keywords using word boundaries
         for keyword in cls.BLOCKED_KEYWORDS:
-            if keyword in query_upper:
+            pattern = r'\b' + re.escape(keyword) + r'\b'
+            if re.search(pattern, query_upper):
                 return False, f"Blocked keyword '{keyword}' found in query"
         
         # Check for injection patterns
