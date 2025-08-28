@@ -1,0 +1,11 @@
+# PostgreSQL adapter (latest version with Python 3.13 support)
+psycopg[binary]==3.2.9
+
+# AWS SDK for Secrets Manager
+boto3==1.35.39
+
+# MCP server framework
+mcp==1.0.0
+
+# Environment variables
+python-dotenv==1.0.1
