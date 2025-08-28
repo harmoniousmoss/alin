@@ -117,10 +117,13 @@ class DatabaseChatBot:
         """Detect if user wants to query database and determine appropriate tool."""
         user_lower = user_input.lower()
         
-        # Database query patterns
-        if any(word in user_lower for word in ["tables", "what tables", "list tables"]):
+        # Database query patterns - check most specific patterns first
+        
+        # Table-related queries (check before generic "how many")
+        if any(phrase in user_lower for phrase in ["how many table", "number of table", "what tables", "list tables"]) or user_lower == "tables":
             return "get_tables", {}
         
+        # Column/schema queries
         elif any(word in user_lower for word in ["schema", "structure", "columns", "describe", "column", "most column"]):
             # Check if asking for comparison across tables
             if any(word in user_lower for word in ["most", "all", "compare", "which"]):
@@ -132,7 +135,8 @@ class DatabaseChatBot:
                     return "describe_table", {"table_name": table}
             return "describe_table", {"table_name": "web_items"}  # Default
         
-        elif any(word in user_lower for word in ["count", "how many", "records", "rows"]):
+        # Record count queries (after table queries to avoid conflict)
+        elif any(word in user_lower for word in ["count", "how many", "records", "rows"]) and not "table" in user_lower:
             # Try to extract table name
             for table in self.available_tables:
                 if table in user_lower:
