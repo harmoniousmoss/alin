@@ -36,25 +36,42 @@ class DatabaseChatBot:
         except Exception as e:
             print(f"⚠️  Warning: Could not initialize database connection: {e}")
     
-    def call_ollama(self, prompt: str) -> str:
+    def call_ollama_streaming(self, prompt: str):
         """Call Ollama API with streaming support."""
         try:
             response = requests.post(self.ollama_url, json={
                 "model": self.model,
                 "prompt": prompt,
-                "stream": False,
+                "stream": True,
                 "options": {
                     "temperature": 0.7,
                     "top_p": 0.9
                 }
-            }, timeout=60)
+            }, timeout=60, stream=True)
             
             if response.status_code == 200:
-                return response.json()["response"]
+                full_response = ""
+                for line in response.iter_lines():
+                    if line:
+                        try:
+                            data = json.loads(line.decode('utf-8'))
+                            if 'response' in data:
+                                chunk = data['response']
+                                print(chunk, end='', flush=True)
+                                full_response += chunk
+                                if data.get('done', False):
+                                    break
+                        except json.JSONDecodeError:
+                            continue
+                return full_response
             else:
-                return f"Error: {response.status_code}"
+                error_msg = f"Error: {response.status_code}"
+                print(error_msg)
+                return error_msg
         except requests.exceptions.RequestException as e:
-            return f"Connection error: {e}"
+            error_msg = f"Connection error: {e}"
+            print(error_msg)
+            return error_msg
     
     async def execute_database_query(self, tool_name: str, params: dict) -> str:
         """Execute database query via MCP server."""
@@ -118,9 +135,11 @@ class DatabaseChatBot:
         
         if tool_name:
             print(f"🔍 Detected database query: {tool_name}")
+            print("⏳ Querying database...", end="", flush=True)
             
             # Execute database query
             db_result = await self.execute_database_query(tool_name, tool_params)
+            print("\r📊 Database query completed! Generating response...\n", end="", flush=True)
             
             # Use AI to format the response
             format_prompt = f"""
@@ -132,7 +151,7 @@ I queried the database and got this result:
 Please provide a clear, helpful, and conversational response to the user based on this database information. Be friendly and concise.
 """
             
-            ai_response = self.call_ollama(format_prompt)
+            ai_response = self.call_ollama_streaming(format_prompt)
             
         else:
             # Regular conversation - use context from previous messages
@@ -149,7 +168,7 @@ Recent conversation:
 Please respond helpfully. If the user seems to want database information, suggest they ask about the available tables.
 """
             
-            ai_response = self.call_ollama(conversation_prompt)
+            ai_response = self.call_ollama_streaming(conversation_prompt)
         
         # Add AI response to history
         self.conversation_history.append({"role": "assistant", "content": ai_response})
@@ -212,11 +231,11 @@ async def main():
                 chatbot.print_help()
                 continue
             
-            # Process input and get response
+            # Process input and get response with streaming
             print("🤖 Assistant: ", end="", flush=True)
             response = await chatbot.process_user_input(user_input)
-            print(response)
-            print()  # Add blank line for readability
+            # Response is already printed via streaming, just add newlines
+            print("\n")  # Add blank lines for readability
             
         except KeyboardInterrupt:
             print("\n👋 Chat ended by user. Goodbye!")
