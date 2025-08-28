@@ -1,4 +1,4 @@
-# Alin - Model Context Protocol Specialized Database Assistant
+## Alin - Model Context Protocol Specialized Database Assistant
 
 Alin is a specialized database assistant that combines MCP (Model Context Protocol) server architecture with Llama 3/Ollama integration. It provides secure PostgreSQL database access via AWS Secrets Manager and enables natural language database queries through an intelligent streaming chat interface, while maintaining strict security controls and database-focused conversations.
 
