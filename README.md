@@ -2,7 +2,7 @@
 
 ## Jiso - Model Context Protocol Specialized Database Assistant
 
-Jiso is a specialized database assistant that combines MCP (Model Context Protocol) server architecture with Llama 3/Ollama integration. It provides secure PostgreSQL database access via AWS Secrets Manager and enables natural language database queries through an intelligent streaming chat interface, while maintaining strict security controls and database-focused conversations.
+Jiso helps you interact with databases using natural language, making it easy to query and manage your data without writing complex code.
 
 ## Features
 
